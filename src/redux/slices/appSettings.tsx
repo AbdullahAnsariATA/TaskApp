@@ -5,7 +5,8 @@ export interface AppSettingsState {
   isAppLoading: boolean;
   isUserVisitedApp: boolean;
   appLanguage: string;
-  themeMode: 'light' | 'dark' | 'system'; // Add theme mode to redux
+  themeMode: 'light' | 'dark' | 'system';
+  isBiometricEnabled: boolean;
 }
 
 const initialState: AppSettingsState = {
@@ -14,6 +15,7 @@ const initialState: AppSettingsState = {
   isUserVisitedApp: false,
   appLanguage: 'en',
   themeMode: 'system',
+  isBiometricEnabled: false,
 };
 
 const appSlice = createSlice({
@@ -35,11 +37,12 @@ const appSlice = createSlice({
     setThemeMode(state, action: PayloadAction<'light' | 'dark' | 'system'>) {
       state.themeMode = action.payload;
     },
-    // Reset app state on logout
+    setBiometricEnabled(state, action: PayloadAction<boolean>) {
+      state.isBiometricEnabled = action.payload;
+    },
     resetAppState(state) {
       state.isUserLoggedIn = false;
       state.isAppLoading = false;
-      // Keep language and theme preferences
     },
   },
 });
@@ -50,6 +53,7 @@ export const {
   setIsAppLoading,
   setAppLanguage,
   setThemeMode,
+  setBiometricEnabled,
   resetAppState,
 } = appSlice.actions;
 export default appSlice.reducer;

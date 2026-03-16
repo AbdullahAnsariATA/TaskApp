@@ -1,3 +1,5 @@
+import { useEffect, useCallback, useState } from 'react';
+import { TouchableOpacity, View } from 'react-native';
 import { useAppDispatch } from 'types/reduxTypes';
 import { setIsUserLoggedIn } from 'store/slices/appSettings';
 import { setAuthUser } from 'store/slices/authSlice';
@@ -5,9 +7,9 @@ import { firebaseAuth } from 'api/firebaseAuth';
 import { SCREENS, COMMON_TEXT, AUTH_TEXT, VARIABLES } from 'constants/index';
 import { showErrorToast } from 'utils/toast';
 import { firebaseLoginValidationSchema, COLORS } from 'utils/index';
-import { FocusProvider, useFormikForm, useAsyncButton } from 'hooks/index';
+import { FocusProvider, useFormikForm, useAsyncButton, useBiometricAuth } from 'hooks/index';
 import { FontSize } from 'types/fontTypes';
-import { Button, Input, AuthComponent, Typography } from 'components/index';
+import { Button, Input, AuthComponent, Typography, Icon } from 'components/index';
 import { navigate } from 'navigation/index';
 import { styles } from './styles';
 
@@ -19,6 +21,17 @@ interface LoginFormValues {
 
 const LoginScreen = () => {
   const dispatch = useAppDispatch();
+  const [biometricLoading, setBiometricLoading] = useState(false);
+
+  const {
+    isBiometricAvailable,
+    biometricIconName,
+    biometricLabel,
+    isChecking,
+    hasAutoTriggered,
+    saveCredentials,
+    authenticateWithBiometric,
+  } = useBiometricAuth();
 
   const initialValues: LoginFormValues = {
     email: '',
@@ -26,23 +39,55 @@ const LoginScreen = () => {
     showPassword: false,
   };
 
-  const handleSubmit = async (values: LoginFormValues) => {
-    try {
-      const user = await firebaseAuth.login(values.email.trim(), values.password);
+  const performLogin = useCallback(
+    async (email: string, password: string) => {
+      const user = await firebaseAuth.login(email, password);
       const localPhoto = await firebaseAuth.getLocalProfileImage(user.uid);
       firebaseAuth.updateFCMToken(user.uid);
-      dispatch(setAuthUser({
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: localPhoto,
-      }));
+      dispatch(
+        setAuthUser({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: localPhoto,
+        }),
+      );
       dispatch(setIsUserLoggedIn(true));
+    },
+    [dispatch],
+  );
+
+  const handleSubmit = async (values: LoginFormValues) => {
+    try {
+      await performLogin(values.email.trim(), values.password);
+      saveCredentials(values.email.trim(), values.password);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Invalid credentials';
       showErrorToast(message, 'Login Failed');
     }
   };
+
+  const handleBiometricLogin = useCallback(async () => {
+    setBiometricLoading(true);
+    try {
+      const creds = await authenticateWithBiometric();
+      if (creds) {
+        await performLogin(creds.email, creds.password);
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Biometric login failed';
+      showErrorToast(message, 'Login Failed');
+    } finally {
+      setBiometricLoading(false);
+    }
+  }, [authenticateWithBiometric, performLogin]);
+
+  useEffect(() => {
+    if (isBiometricAvailable && !isChecking && !hasAutoTriggered.current) {
+      hasAutoTriggered.current = true;
+      handleBiometricLogin();
+    }
+  }, [isBiometricAvailable, isChecking, handleBiometricLogin, hasAutoTriggered]);
 
   const formik = useFormikForm<LoginFormValues>({
     initialValues,
@@ -90,26 +135,44 @@ const LoginScreen = () => {
             iconName: formik.values.showPassword ? 'eye' : 'eye-off',
             color: COLORS.ICONS,
             size: FontSize.MediumLarge,
-            onPress: () =>
-              formik.setFieldValue('showPassword', !formik.values.showPassword),
+            onPress: () => formik.setFieldValue('showPassword', !formik.values.showPassword),
           }}
           error={formik.errors.password}
           touched={Boolean(formik.touched.password && formik.submitCount)}
         />
       </FocusProvider>
 
-      <Typography
-        style={styles.forgotText}
-        onPress={() => navigate(SCREENS.FORGOT_PASSWORD)}
-      >
+      <Typography style={styles.forgotText} onPress={() => navigate(SCREENS.FORGOT_PASSWORD)}>
         {COMMON_TEXT.FORGOT_PASSWORD}
       </Typography>
 
-      <Button
-        title={COMMON_TEXT.LOGIN}
-        loading={loading}
-        onPress={onPress}
-      />
+      <Button title={COMMON_TEXT.LOGIN} loading={loading} onPress={onPress} />
+
+      {isBiometricAvailable && (
+        <View style={styles.biometricContainer}>
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Typography style={styles.dividerText}>or</Typography>
+            <View style={styles.dividerLine} />
+          </View>
+          <TouchableOpacity
+            style={styles.biometricButton}
+            onPress={handleBiometricLogin}
+            disabled={biometricLoading}
+            activeOpacity={0.7}
+          >
+            <Icon
+              componentName="MaterialCommunityIcons"
+              iconName={biometricIconName}
+              size={32}
+              color={COLORS.PRIMARY}
+            />
+          </TouchableOpacity>
+          <Typography style={styles.biometricLabel}>
+            {`Login with ${biometricLabel}`}
+          </Typography>
+        </View>
+      )}
     </AuthComponent>
   );
 };
