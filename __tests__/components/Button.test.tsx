@@ -41,7 +41,7 @@ describe('Button', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('does not call onPress when disabled', () => {
+  it('sets disabled on TouchableOpacity when disabled prop is true', () => {
     const onPress = jest.fn();
     let tree: ReactTestRenderer.ReactTestRenderer | null = null;
     act(() => {
@@ -50,12 +50,6 @@ describe('Button', () => {
       );
     });
     const touchable = tree!.root.findByType(require('react-native').TouchableOpacity);
-    // When disabled, Button passes undefined for onPress, so no handler to invoke
-    if (touchable.props.onPress) {
-      act(() => {
-        touchable.props.onPress();
-      });
-    }
-    expect(onPress).not.toHaveBeenCalled();
+    expect(touchable.props.disabled).toBe(true);
   });
 });

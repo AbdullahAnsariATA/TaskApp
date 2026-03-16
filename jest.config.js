@@ -18,6 +18,24 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(react-native|@react-native|react-native-.*|@react-navigation|react-redux|redux|@reduxjs/toolkit|redux-persist|immer|@react-native-firebase)/)',
   ],
-  testPathIgnorePatterns: ['/node_modules/', '/android/', '/ios/'],
+  testPathIgnorePatterns: ['/node_modules/', '/android/', '/ios/', '/e2e/'],
   maxWorkers: 1,
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/styles.{ts,tsx}',
+    '!src/types/**',
+    '!src/constants/**',
+    '!src/i18n/**',
+    '!src/theme/**',
+    '!src/config/**',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
 };

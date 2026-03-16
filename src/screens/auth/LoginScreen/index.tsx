@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { useAppDispatch } from 'types/reduxTypes';
 import { setIsUserLoggedIn } from 'store/slices/appSettings';
@@ -27,8 +27,6 @@ const LoginScreen = () => {
     isBiometricAvailable,
     biometricIconName,
     biometricLabel,
-    isChecking,
-    hasAutoTriggered,
     saveCredentials,
     authenticateWithBiometric,
   } = useBiometricAuth();
@@ -39,7 +37,7 @@ const LoginScreen = () => {
     showPassword: false,
   };
 
-  const performLogin = useCallback(
+  const firebaseLogin = useCallback(
     async (email: string, password: string) => {
       const user = await firebaseAuth.login(email, password);
       const localPhoto = await firebaseAuth.getLocalProfileImage(user.uid);
@@ -52,15 +50,20 @@ const LoginScreen = () => {
           photoURL: localPhoto,
         }),
       );
-      dispatch(setIsUserLoggedIn(true));
+      return user;
     },
     [dispatch],
   );
 
+  const completeLogin = useCallback(() => {
+    dispatch(setIsUserLoggedIn(true));
+  }, [dispatch]);
+
   const handleSubmit = async (values: LoginFormValues) => {
     try {
-      await performLogin(values.email.trim(), values.password);
-      saveCredentials(values.email.trim(), values.password);
+      await firebaseLogin(values.email.trim(), values.password);
+      await saveCredentials(values.email.trim(), values.password);
+      completeLogin();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Invalid credentials';
       showErrorToast(message, 'Login Failed');
@@ -72,7 +75,8 @@ const LoginScreen = () => {
     try {
       const creds = await authenticateWithBiometric();
       if (creds) {
-        await performLogin(creds.email, creds.password);
+        await firebaseLogin(creds.email, creds.password);
+        completeLogin();
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Biometric login failed';
@@ -80,14 +84,7 @@ const LoginScreen = () => {
     } finally {
       setBiometricLoading(false);
     }
-  }, [authenticateWithBiometric, performLogin]);
-
-  useEffect(() => {
-    if (isBiometricAvailable && !isChecking && !hasAutoTriggered.current) {
-      hasAutoTriggered.current = true;
-      handleBiometricLogin();
-    }
-  }, [isBiometricAvailable, isChecking, handleBiometricLogin, hasAutoTriggered]);
+  }, [authenticateWithBiometric, firebaseLogin, completeLogin]);
 
   const formik = useFormikForm<LoginFormValues>({
     initialValues,
@@ -116,6 +113,7 @@ const LoginScreen = () => {
           allowSpacing={false}
           keyboardType="email-address"
           autoCapitalize="none"
+          textContentType="none"
           placeholder={COMMON_TEXT.ENTER_YOUR_EMAIL}
           error={formik.errors.email}
           touched={Boolean(formik.touched.email && formik.submitCount)}
@@ -128,6 +126,7 @@ const LoginScreen = () => {
           value={formik.values.password}
           returnKeyType="done"
           allowSpacing={false}
+          textContentType="none"
           placeholder={COMMON_TEXT.ENTER_YOUR_PASSWORD}
           secureTextEntry={!formik.values.showPassword}
           endIcon={{

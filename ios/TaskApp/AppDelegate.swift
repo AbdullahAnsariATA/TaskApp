@@ -4,6 +4,7 @@ import UIKit
 import UserNotifications
 import React
 import React_RCTAppDelegate
+import React_RCTLinking
 import ReactAppDependencyProvider
 
 @main
@@ -39,6 +40,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
       launchOptions: launchOptions
     )
     return true
+  }
+
+  func application(
+    _ application: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    return RCTLinkingManager.application(application, open: url, options: options)
   }
 
   // Forward APNs token to Firebase

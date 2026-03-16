@@ -1,0 +1,110 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`LoginScreen snapshot matches 1`] = `
+<View>
+  <Text>
+    Welcome Back
+  </Text>
+  <TextInput
+    onChangeText={[MockFunction]}
+    testID="input-undefined"
+    value=""
+  />
+  <TextInput
+    onChangeText={[MockFunction]}
+    testID="input-undefined"
+    value=""
+  />
+  <Text
+    onPress={[Function]}
+    style={
+      {
+        "alignSelf": "flex-end",
+        "color": "#007AFF",
+        "fontSize": 12,
+        "marginBottom": 16,
+        "marginTop": 4,
+      }
+    }
+  >
+    Forgot Password?
+  </Text>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": false,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "opacity": 1,
+      }
+    }
+    testID="login-button"
+  >
+    <Text>
+      Login
+    </Text>
+  </View>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "opacity": 1,
+      }
+    }
+  >
+    <Text>
+      Sign Up
+    </Text>
+  </View>
+</View>
+`;

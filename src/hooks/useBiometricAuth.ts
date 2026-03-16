@@ -1,13 +1,12 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import * as Keychain from 'react-native-keychain';
 import { useAppDispatch, useAppSelector } from 'types/reduxTypes';
 import { setBiometricEnabled } from 'store/slices/appSettings';
-import { saveUserDetailsForRole, getUserDetailsByRole, clearSavedCredentials } from 'utils/storage';
 import { logger } from 'utils/logger';
 
 type BiometryType = Keychain.BIOMETRY_TYPE | null;
 
-const BIOMETRIC_ROLE = 'biometric_default';
+const BIOMETRIC_SERVICE = 'com.taskproject.biometric_credentials';
 
 const getBiometricIcon = (type: BiometryType) => {
   if (type === Keychain.BIOMETRY_TYPE.FACE_ID || type === Keychain.BIOMETRY_TYPE.FACE) {
@@ -38,12 +37,12 @@ export const useBiometricAuth = () => {
   const isBiometricEnabled = useAppSelector(state => state.app.isBiometricEnabled);
   const [biometryType, setBiometryType] = useState<BiometryType>(null);
   const [isChecking, setIsChecking] = useState(true);
-  const hasAutoTriggered = useRef(false);
 
   useEffect(() => {
     (async () => {
       try {
         const type = await Keychain.getSupportedBiometryType();
+        logger.log('Biometry type detected:', type);
         setBiometryType(type);
       } catch (error) {
         logger.log('Biometric check failed:', error);
@@ -61,10 +60,27 @@ export const useBiometricAuth = () => {
   const saveCredentials = useCallback(
     async (email: string, password: string) => {
       try {
-        await saveUserDetailsForRole(BIOMETRIC_ROLE, { email, password });
+        const payload = JSON.stringify({ email, password });
+        await Keychain.setGenericPassword(BIOMETRIC_SERVICE, payload, {
+          service: BIOMETRIC_SERVICE,
+          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+          accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
+        });
         dispatch(setBiometricEnabled(true));
+        logger.log('Biometric credentials saved successfully');
       } catch (error) {
-        logger.log('Failed to save biometric credentials:', error);
+        logger.log('Biometric save with accessControl failed, trying without:', error);
+        try {
+          const payload = JSON.stringify({ email, password });
+          await Keychain.setGenericPassword(BIOMETRIC_SERVICE, payload, {
+            service: BIOMETRIC_SERVICE,
+            accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+          });
+          dispatch(setBiometricEnabled(true));
+          logger.log('Biometric credentials saved (without accessControl)');
+        } catch (fallbackError) {
+          logger.log('Failed to save biometric credentials entirely:', fallbackError);
+        }
       }
     },
     [dispatch],
@@ -75,12 +91,21 @@ export const useBiometricAuth = () => {
     password: string;
   } | null> => {
     try {
-      const saved = await getUserDetailsByRole(BIOMETRIC_ROLE, {
-        title: `Login with ${getBiometricLabel(biometryType)}`,
-        subtitle: 'Authenticate to sign in',
+      const label = getBiometricLabel(biometryType);
+      const credentials = await Keychain.getGenericPassword({
+        service: BIOMETRIC_SERVICE,
+        authenticationPrompt: {
+          title: `Login with ${label}`,
+          subtitle: 'Authenticate to sign in',
+        },
       });
-      if (saved?.email && saved?.password) {
-        return { email: saved.email, password: saved.password };
+      if (!credentials || typeof credentials === 'boolean') {
+        logger.log('No biometric credentials found');
+        return null;
+      }
+      const parsed = JSON.parse(credentials.password);
+      if (parsed?.email && parsed?.password) {
+        return { email: parsed.email, password: parsed.password };
       }
       return null;
     } catch (error) {
@@ -91,7 +116,7 @@ export const useBiometricAuth = () => {
 
   const clearBiometricCredentials = useCallback(async () => {
     try {
-      await clearSavedCredentials();
+      await Keychain.resetGenericPassword({ service: BIOMETRIC_SERVICE });
       dispatch(setBiometricEnabled(false));
     } catch (error) {
       logger.log('Failed to clear biometric credentials:', error);
@@ -103,8 +128,6 @@ export const useBiometricAuth = () => {
     isBiometricAvailable,
     biometricIconName,
     biometricLabel,
-    isChecking,
-    hasAutoTriggered,
     saveCredentials,
     authenticateWithBiometric,
     clearBiometricCredentials,

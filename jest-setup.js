@@ -13,12 +13,12 @@ jest.mock('redux-persist', () => {
   };
 });
 
-// Mock Stripe (used by App)
+// Mock Stripe (used by App) — virtual because the package may not be installed
 jest.mock('@stripe/stripe-react-native', () => ({
   StripeProvider: ({ children }) => children,
   useStripe: () => ({}),
   useConfirmPayment: () => ({}),
-}));
+}), { virtual: true });
 
 // Mock Firebase Firestore (used by firestoreChat -> JobInfoBox -> App)
 jest.mock('@react-native-firebase/firestore', () => ({
@@ -59,7 +59,20 @@ jest.mock('hooks/useMessaging', () => ({
 }));
 
 // Mock native modules that fail in Jest
-jest.mock('react-native-blob-util', () => ({ default: {} }));
+jest.mock('react-native-blob-util', () => ({
+  __esModule: true,
+  default: {
+    fs: {
+      dirs: { DocumentDir: '/mock/documents', CacheDir: '/mock/cache' },
+      exists: jest.fn(() => Promise.resolve(false)),
+      isDir: jest.fn(() => Promise.resolve(false)),
+      mkdir: jest.fn(() => Promise.resolve()),
+      unlink: jest.fn(() => Promise.resolve()),
+      cp: jest.fn(() => Promise.resolve()),
+      ls: jest.fn(() => Promise.resolve([])),
+    },
+  },
+}));
 jest.mock('@react-native-community/netinfo', () => ({
   addEventListener: jest.fn(() => jest.fn()),
   fetch: jest.fn(() => Promise.resolve({ isConnected: true })),
@@ -82,7 +95,7 @@ jest.mock('utils/location', () => ({
   getCurrentLocation: jest.fn(),
   reverseGeocode: jest.fn(),
   getAddressFromCoordinates: jest.fn(),
-}));
+}), { virtual: true });
 
 // Mock Notifee
 jest.mock('@notifee/react-native', () => ({
@@ -202,6 +215,36 @@ jest.mock('hooks/index', () => {
     useBackHandler: () => {},
     useResetStackOnBack: () => {},
     useMessaging: () => {},
+    useBiometricAuth: () => ({
+      biometryType: null,
+      isBiometricAvailable: false,
+      biometricIconName: 'fingerprint',
+      biometricLabel: 'Biometric',
+      saveCredentials: jest.fn(),
+      authenticateWithBiometric: jest.fn(),
+      clearBiometricCredentials: jest.fn(),
+    }),
+    useFormikForm: jest.fn((config) => ({
+      values: config?.initialValues ?? {},
+      errors: {},
+      touched: {},
+      handleChange: jest.fn(() => jest.fn()),
+      handleBlur: jest.fn(() => jest.fn()),
+      handleSubmit: jest.fn(),
+      submitForm: jest.fn(),
+      setFieldValue: jest.fn(),
+      isSubmitting: false,
+      isValid: true,
+      dirty: false,
+    })),
+    useAsyncButton: jest.fn(() => ({
+      loading: false,
+      onPress: jest.fn(),
+    })),
+    useMultipleAsyncButtons: jest.fn(() => ({
+      isLoading: jest.fn(() => false),
+      wrap: jest.fn((_name, fn) => fn),
+    })),
   };
 });
 
@@ -215,3 +258,75 @@ jest.mock('react-native-vector-icons/FontAwesome5', () => 'Icon');
 jest.mock('react-native-vector-icons/Ionicons', () => 'Icon');
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'Icon');
 jest.mock('react-native-vector-icons/MaterialIcons', () => 'Icon');
+
+// Mock react-native-keychain (used by useBiometricAuth and storage)
+jest.mock('react-native-keychain', () => ({
+  BIOMETRY_TYPE: {
+    FACE_ID: 'FaceID',
+    FACE: 'Face',
+    TOUCH_ID: 'TouchID',
+    FINGERPRINT: 'Fingerprint',
+    IRIS: 'Iris',
+  },
+  ACCESSIBLE: {
+    WHEN_UNLOCKED: 'AccessibleWhenUnlocked',
+    WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'AccessibleWhenUnlockedThisDeviceOnly',
+  },
+  ACCESS_CONTROL: {
+    BIOMETRY_ANY_OR_DEVICE_PASSCODE: 'BiometryAnyOrDevicePasscode',
+  },
+  getSupportedBiometryType: jest.fn(() => Promise.resolve(null)),
+  setGenericPassword: jest.fn(() => Promise.resolve(true)),
+  getGenericPassword: jest.fn(() => Promise.resolve(false)),
+  resetGenericPassword: jest.fn(() => Promise.resolve(true)),
+  hasGenericPassword: jest.fn(() => Promise.resolve(false)),
+}));
+
+// Mock react-native-toast-message
+jest.mock('react-native-toast-message', () => ({
+  __esModule: true,
+  default: { show: jest.fn(), hide: jest.fn() },
+}));
+
+// Mock @react-native-firebase/auth (used by firebaseAuth API)
+jest.mock('@react-native-firebase/auth', () => {
+  const mockUser = {
+    uid: 'test-uid',
+    email: 'test@example.com',
+    displayName: 'Test User',
+    photoURL: null,
+    updateProfile: jest.fn(() => Promise.resolve()),
+    reload: jest.fn(() => Promise.resolve()),
+  };
+  const authInstance = {
+    signInWithEmailAndPassword: jest.fn(() => Promise.resolve({ user: mockUser })),
+    createUserWithEmailAndPassword: jest.fn(() => Promise.resolve({ user: mockUser })),
+    sendPasswordResetEmail: jest.fn(() => Promise.resolve()),
+    signOut: jest.fn(() => Promise.resolve()),
+    currentUser: mockUser,
+  };
+  const auth = jest.fn(() => authInstance);
+  auth._mockUser = mockUser;
+  auth._mockInstance = authInstance;
+  return { __esModule: true, default: auth };
+});
+
+// Mock react-native-keyboard-controller
+jest.mock('react-native-keyboard-controller', () => ({
+  KeyboardProvider: ({ children }) => children,
+  useKeyboardHandler: jest.fn(),
+  useReanimatedKeyboardAnimation: jest.fn(() => ({ height: { value: 0 }, progress: { value: 0 } })),
+}));
+
+// Mock react-native-linear-gradient
+jest.mock('react-native-linear-gradient', () => {
+  const { View } = require('react-native');
+  return { __esModule: true, default: View };
+});
+
+// Mock @stripe/stripe-react-native (already mocked above, but ensure StripeProvider is available)
+// Mock react-native-star-rating-widget
+jest.mock('react-native-star-rating-widget', () => {
+  const { View } = require('react-native');
+  return { __esModule: true, default: View };
+});

@@ -1,254 +1,187 @@
-# React Native Project Setup Guide
+# TaskApp
 
-This document provides step-by-step instructions to integrate the React Native boilerplate into your existing project folder. Follow these steps to quickly set up the necessary files and dependencies.
----
-
-
-
-## 1. Prerequisites
-
-Before starting, ensure you have the following tools installed on your system:
-
-- **Node.js** – [Download Node.js](https://nodejs.org/)
-- **Yarn** – [Install Yarn](https://yarnpkg.com/getting-started/install)
-- **Watchman** – [Install Watchman](https://facebook.github.io/watchman/docs/install)
-- **React Native CLI** – [Install React Native CLI](https://reactnative.dev/docs/environment-setup)
-- **Xcode** – [Download Xcode from the App Store](https://apps.apple.com/us/app/xcode/id497799835?mt=12) (for iOS development)
-- **Android Studio** – [Download Android Studio](https://developer.android.com/studio) (for Android development)
+React Native **0.83.1** · Hermes · New Architecture
 
 ---
 
-## 2. Project Setup Steps
+## Prerequisites
 
-### Step 1: Clone the Repository
-First, clone the React Native boilerplate project to your local machine:
+| Tool           | Version   | Install                                                      |
+|----------------|-----------|--------------------------------------------------------------|
+| Node.js        | >= 20     | [nodejs.org](https://nodejs.org/) or `nvm install 20`       |
+| Yarn           | 1.x       | `npm install -g yarn`                                        |
+| Watchman       | latest    | `brew install watchman`                                      |
+| Ruby           | >= 2.6.10 | Via [rbenv](https://github.com/rbenv/rbenv) or [rvm](https://rvm.io/) |
+| Xcode          | >= 15     | [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835?mt=12) (iOS) |
+| Xcode CLI      | latest    | `xcode-select --install`                                     |
+| Android Studio | latest    | [developer.android.com/studio](https://developer.android.com/studio) |
+| JDK            | 17        | Bundled with Android Studio or `brew install --cask zulu17`  |
 
-```bash
-git clone https://github.com/MuhammadShahidRaza/React-Native-Boilerplate.git
-cd <project-folder>
-```
-
-### Step 2: Copy Required Files and Folders
-
-Copy the following files and folders into the root of your project directory:
-
-- **`src` folder**
-- **`scripts` folder**
-- **`babel.config.js`**
-- **`commitlint.config.js`**
-- **`declarations.d.ts`**
-- **`eslint.config.js`**
-- **`metro.config.js`**
-- **`.prettierrc.js`**
-- **`App.tsx`**
-- **`.env` files**
-- **`.husky` folder**
-- **`Font` folder** (unzip and open in Xcode to paste in the project folder)
-
-### Step 3: Install Dependencies
-
-#### Main Dependencies
-
-Run the following command to install the main dependencies:
+Add to your `~/.zshrc` (or `~/.bashrc`):
 
 ```bash
-yarn add react-native-reanimated react-native-safe-area-context react-native-screens react-native-skeleton-placeholder formik @reduxjs/toolkit i18next react-native-dotenv react-i18next react-native-svg react-native-toast-message react-native-vector-icons react-redux yup react-native-permissions react-native-phone-number-input react-native-image-crop-picker axios @react-navigation/native-stack @react-navigation/native @react-native-async-storage/async-storage @react-native-community/geolocation react-native-linear-gradient @notifee/react-native
-```
-
-#### Development Dependencies
-
-Run the following command to install the development dependencies:
-
-```bash
-yarn add -D @commitlint/cli @commitlint/config-conventional @types/react-native-vector-icons @typescript-eslint/eslint-plugin @typescript-eslint/parser babel-plugin-module-resolver eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-native globals husky lint-staged metro-react-native-babel-preset react-native-codegen react-native-svg-transformer typescript-eslint
-```
-
-### Step 4: Update Project Files
-
-1. **`index.js`**  
-   Add the following line at the top:
-   ```javascript
-   import './src/i18n';
-   ```
-
-2. **`android/app/src/main/res/values/strings.xml`**  
-   Add any required map keys or other configuration values as needed.
-
-3. **Change App Icons**  
-   Use [EasyAppIcon](https://easyappicon.com) to generate and replace the app icons in your project.
-
-4. **`tsconfig.json`**  
-   Replace or update with the provided `tsconfig.json` file.
-
-5. **`package.json`**  
-   Add these scripts under the `"scripts"` section:
-
-   ```json
-   "scripts": {
-       "build": "cd android && ./gradlew clean && ./gradlew assembleRelease",
-       "aab": "cd android && ./gradlew clean && ./gradlew bundleRelease",
-       "debugAndroid": "cd android && ./gradlew clean && cd .. && yarn android",
-       "debugIos": "cd ios && pod install && cd .. && yarn ios",
-       "prepare": "husky",
-       "format": "prettier --write ./src",
-       "simulators": "xcrun simctl list devices",
-       "lint": "eslint .",
-       "start": "react-native start",
-       "test": "jest",
-       "clean": "rm -rf node_modules && yarn cache clean && yarn",
-       "android": "react-native run-android",
-       "reverse": "adb reverse tcp:8081 tcp:8081",
-       "devices": "adb devices && yarn reverse",
-       "android:clean": "cd android && ./gradlew clean",
-       "android:bundle:assets": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
-       "open-apk": "open ./android/app/build/outputs/apk/",
-       "signing": "cd android && ./gradlew signingReport && cd ..",
-       "open-bundle": "open ./android/app/build/outputs/bundle",
-       "build:prod": "yarn android:clean && cd android && ./gradlew assembleRelease && yarn open-apk",
-       "bundle": "cd android && ./gradlew bundleRelease && open-bundle",
-       "ios": "react-native run-ios",
-       "pod": "cd ios && pod install && cd ..",
-       "pod:reset": "cd ios && pod deintegrate && pod setup && pod install && cd ..",
-       "ios:clean": "cd ios && rm -rf ~/Library/Caches/CocoaPods && rm -rf Pods && rm -rf ~/Library/Developer/Xcode/DerivedData/* && yarn pod",
-       "ios:debug": "pod && yarn ios",
-       "ios:bundle:assets": "react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios"
-   },
-   "lint-staged": {
-       "./src/**/*.{js,jsx,ts,tsx}": [
-           "yarn format",
-           "yarn lint"
-       ]
-   }
-   ```
-
----
-
-## 3. Configure iOS
-
-### Update the `Podfile`
-
-- **Before** this line:
-  ```ruby
-  (platform :ios, min_ios_version_supported)
-  prepare_react_native_project!
-  ```
-
-  Add the following code to resolve the React Native dependencies:
-
-  ```ruby
-  def node_require(script)
-    # Resolve script with node to allow for hoisting
-    require Pod::Executable.execute_command('node', ['-p',
-      "require.resolve(
-        '#{script}',
-        {paths: [process.argv[1]]},
-      )", __dir__]).strip
-  end
-
-  node_require('react-native/scripts/react_native_pods.rb')
-  node_require('react-native-permissions/scripts/setup.rb')
-  ```
-
-- **After** this line:
-  ```ruby
-  (platform :ios, min_ios_version_supported)
-  prepare_react_native_project!
-  ```
-
-  Add the required permissions for your app:
-
-  ```ruby
-  setup_permissions([
-      'AppTrackingTransparency',
-      'Bluetooth',
-      'Calendars',
-      'CalendarsWriteOnly',
-      'Camera',
-      'Contacts',
-      'FaceID',
-      'LocationAccuracy',
-      'LocationAlways',
-      'LocationWhenInUse',
-      'MediaLibrary',
-      'Microphone',
-      'Motion',
-      'Notifications',
-      'PhotoLibrary',
-      'PhotoLibraryAddOnly',
-      'Reminders',
-      'Siri',
-      'SpeechRecognition',
-      'StoreKit',
-  ])
-  ```
-
-### Update `Info.plist`
-
-Add the following keys to the `Info.plist`:
-
-```xml
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>$(PRODUCT_NAME) needs your location to show nearby practitioners.</string>
-<key>UIAppFonts</key>
-<array>
-    <string>AntDesign.ttf</string>
-    <string>Entypo.ttf</string>
-    <string>EvilIcons.ttf</string>
-    <string>Feather.ttf</string>
-    <string>FontAwesome.ttf</string>
-    <string>FontAwesome5_Brands.ttf</string>
-    <string>FontAwesome5_Regular.ttf</string>
-    <string>FontAwesome5_Solid.ttf</string>
-    <string>FontAwesome6_Brands.ttf</string>
-    <string>FontAwesome6_Regular.ttf</string>
-    <string>FontAwesome6_Solid.ttf</string>
-    <string>Foundation.ttf</string>
-    <string>Ionicons.ttf</string>
-    <string>MaterialIcons.ttf</string>
-    <string>MaterialCommunityIcons.ttf</string>
-    <string>SimpleLineIcons.ttf</string>
-    <string>Octicons.ttf</string>
-    <string>Zocial.ttf</string>
-    <string>Fontisto.ttf</string>
-    <string>GorditaBlack.otf</string>
-    <string>GorditaBold.otf</string>
-    <string>GorditaLight.otf</string>
-    <string>GorditaMedium.otf</string>
-    <string>GorditaRegular.otf</string>
-</array>
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/platform-tools
 ```
 
 ---
 
-## 4. Final Steps
-
-### Run the Gradle Update Script
-To update your Gradle configuration, run:
+## Setup
 
 ```bash
-node scripts/updateBuildGradle.js
+# 1. Clone
+git clone <repository-url>
+cd task-project
+
+# 2. Install JS dependencies (also runs patch-package via postinstall)
+yarn
+
+# 3. Install Ruby gems (CocoaPods)
+bundle install
+
+# 4. Install iOS pods
+cd ios && bundle exec pod install && cd ..
+
+# 5. Create env file and fill in the values
+cp .env.development .env
 ```
 
-### Generate Assets
+### Firebase (required)
 
-Run the following command to generate the necessary assets:
+Place these files from the [Firebase Console](https://console.firebase.google.com/) — the app will crash without them:
+
+- `android/app/google-services.json`
+- `ios/TaskApp/GoogleService-Info.plist`
+
+### Environment Variables
+
+The `.env` file is read at build time via `react-native-dotenv`. Templates (`.env.development`, `.env.production`) are in the repo with empty values.
+
+| Variable                  | Description                          | Required |
+|---------------------------|--------------------------------------|----------|
+| `API_BASE_URL`            | Backend API base URL                 | Yes      |
+| `SOCKET_BASE_URL`         | WebSocket server URL                 | Yes      |
+| `WEB_CLIENT_ID`           | Google Sign-In web client ID         | Yes      |
+| `IOS_CLIENT_ID`           | Google Sign-In iOS client ID         | Yes      |
+| `ANDROID_CLIENT_ID`       | Google Sign-In Android client ID     | Yes      |
+| `MAP_API_KEY`             | Google Maps API key                  | Yes      |
+| `IMAGE_URL`               | Base URL for remote images           | Yes      |
+| `APPLE_CLIENT_ID_ANDROID` | Apple Sign-In service ID (Android)   | No       |
+| `APPLE_REDIRECT_URI`      | Apple Sign-In redirect URI           | No       |
+| `APPLE_MERCHANT_ID`       | Apple Pay merchant ID                | No       |
+| `ANDROID_MAP_KEYS`        | Maps key override (Android)          | No       |
+| `IOS_MAP_KEYS`            | Maps key override (iOS)              | No       |
+| `MAP_KEYS`                | Fallback map key                     | No       |
+| `IS_ALPHA_PHASE`          | Alpha feature flag (`true`/`false`)  | No       |
+| `IOS_CHANNEL_ZENDESK`     | Zendesk channel key (iOS)            | No       |
+| `ANDROID_CHANNEL_ZENDESK` | Zendesk channel key (Android)        | No       |
+| `OFFLINE_ACCESS`          | OAuth offline access scope           | No       |
+
+### Android Emulator
+
+Open Android Studio → Virtual Device Manager → create a **Pixel 9** AVD (API 34+). The run script expects an AVD named `Pixel_9`.
+
+---
+
+## Run on Android
 
 ```bash
-npx react-native-asset
+yarn android              # launches Pixel_9 emulator if needed + builds debug
+```
+
+Physical device:
+
+```bash
+yarn devices              # lists devices + adb reverse tcp:8081
+yarn android
 ```
 
 ---
 
-### Run the Build 
+## Run on iOS
 
+```bash
+yarn ios                  # build + run on simulator (pods must be installed)
+# or
+yarn debugIos             # pod install + build + run
+```
 
-### For iOS:
+---
 
-yarn debugIos
+## Docker Setup (Android)
 
-### For Android:
+> iOS builds require macOS + Xcode and cannot run in Docker. Docker is for Android builds only.
 
-yarn debugAndroid
+### Dockerfile
 
-Your project is now ready for development!
+```dockerfile
+FROM reactnativecommunity/react-native-android:latest
 
+WORKDIR /app
+
+# Install JS dependencies (cached layer)
+COPY package.json yarn.lock ./
+RUN yarn --frozen-lockfile
+
+# Copy project
+COPY . .
+
+# Environment variables
+COPY .env.production .env
+
+# Build release APK
+RUN cd android && ./gradlew assembleRelease
+```
+
+### Build & extract the APK
+
+```bash
+docker build -t taskapp-android .
+docker create --name extract taskapp-android
+docker cp extract:/app/android/app/build/outputs/apk/release/ ./apk-output
+docker rm extract
+```
+
+### Build AAB (Play Store bundle)
+
+Replace the last `RUN` line in the Dockerfile:
+
+```dockerfile
+RUN cd android && ./gradlew bundleRelease
+```
+
+Then extract:
+
+```bash
+docker build -t taskapp-android .
+docker create --name extract taskapp-android
+docker cp extract:/app/android/app/build/outputs/bundle/release/ ./aab-output
+docker rm extract
+```
+
+### One-liner (no Dockerfile needed)
+
+```bash
+docker run --rm -v "$PWD":/app -w /app \
+  reactnativecommunity/react-native-android:latest \
+  bash -c "yarn --frozen-lockfile && cd android && ./gradlew assembleRelease"
+```
+
+The APK will be at `android/app/build/outputs/apk/release/`.
+
+The [`reactnativecommunity/react-native-android`](https://hub.docker.com/r/reactnativecommunity/react-native-android) image ships with Node, Yarn, JDK 17, and the Android SDK pre-configured.
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| `yarn` install fails | `yarn clean` (removes `node_modules`, clears cache, reinstalls) |
+| Android OOM during build | Already set to 6 GB in `android/gradle.properties` — increase `org.gradle.jvmargs` if needed |
+| iOS pod install fails | `yarn ios:clean` then `yarn pod` |
+| Metro port 8081 in use | `lsof -ti:8081 \| xargs kill -9` or `yarn start --port 8082` |
+| Build fails after branch switch | `yarn pod:reset` (iOS) / `yarn android:clean` (Android) |
+| Firebase crash on launch | Add `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) from Firebase Console |
+| Emulator not found | Create a `Pixel_9` AVD in Android Studio, or edit the name in `scripts/run-android-pixel.sh` |

@@ -117,6 +117,16 @@
 				<string>com.googleusercontent.apps.617797750409-of77umplvdt3gk0mb12mq558fcvdvuj4</string>
 				</array>
 			</dict>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Viewer</string>
+				<key>CFBundleURLName</key>
+				<string>autonomous</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>autonomous</string>
+				</array>
+			</dict>
 		</array>
 	</dict>
 </plist>

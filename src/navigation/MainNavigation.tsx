@@ -5,6 +5,7 @@ import { useAppSelector } from 'types/reduxTypes';
 import { useTheme } from 'hooks/useTheme';
 import { SplashScreen } from 'components/common';
 import useFirebaseMessaging from 'hooks/useMessaging';
+import { linking } from './linking';
 
 const MainNavigation = () => {
   const isUserLoggedIn = useAppSelector(state => state.app.isUserLoggedIn);
@@ -18,7 +19,12 @@ const MainNavigation = () => {
   }
 
   return (
-    <NavigationContainer theme={theme} ref={navigationRef} key={`nav-${themeVersion}`}>
+    <NavigationContainer
+      linking={linking}
+      theme={theme}
+      ref={navigationRef}
+      key={`nav-${themeVersion}`}
+    >
       {isUserLoggedIn ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
